@@ -9,6 +9,8 @@ devs to work and communicate with.
 
 The first case defined re-creates the [Conservative Updating](http://bundler.io/v1.12/man/bundle-install.1.html#CONSERVATIVE-UPDATING) scenario in the `bundle install` docs.
 
+## Running Cases
+
 To run the cases in `cases/`:
 
     ruby run_cases.rb
@@ -20,3 +22,7 @@ To run only the cases with `some_filter` in their filename:
 The filter is a regexp, so this will also work:
 
     ./run_cases.rb install.*path
+    
+As well as specifying a directory:
+
+    ./run_cases.rb cases/conservative/
