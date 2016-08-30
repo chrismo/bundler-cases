@@ -47,7 +47,7 @@ class BundlerCase
           Pass.new(fn, title)
         else
           puts c.failures.join("\n")
-          Fail.new(fn, title, c.failures.join("\n"))
+          Fail.new(fn, title, c.failures.join('; '))
         end
       else
         Fail.new(fn, nil, 'No BundlerCase found')
