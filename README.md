@@ -16,3 +16,7 @@ To run the cases in `cases/`:
 To run only the cases with `some_filter` in their filename:
 
     ruby run_cases.rb some_filter
+    
+The filter is a regexp, so this will also work:
+
+    ./run_cases.rb install.*path
