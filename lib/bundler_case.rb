@@ -127,7 +127,7 @@ class BundlerCase
     end
 
     def test
-      Bundler.with_original_env do
+      Bundler.with_clean_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
         Dir.chdir(@bundler_case.out_dir) do
           @procs.map(&:call)
