@@ -72,7 +72,7 @@ class BundlerCase
       @failures = []
       @expected_specs = []
       @expected_not_specs = []
-      @cmd = -> { cmd = 'bundle install --path .bundle'; puts "=> #{cmd}"; system cmd }
+      @cmd = 'bundle install --path .bundle'
       @procs = []
     end
 
@@ -96,19 +96,18 @@ class BundlerCase
     end
 
     def given_bundler_version(&block)
-      version = block.call
+      @version = block.call
       @procs << -> {
         installed = `gem list bundler`.scan(/\Abundler \((.*)\)/).join.split(/, /)
-        unless installed.include?(version)
-          puts "Installing bundler #{version}..."
-          `gem install bundler --version #{version}`
+        unless installed.include?(@version)
+          puts "Installing bundler #{@version}..."
+          `gem install bundler --version #{@version}`
         end
       }
     end
 
     def execute_bundler(&block)
-      cmd = block.call
-      @cmd = -> { puts "=> #{cmd}"; system cmd }
+      @cmd = block.call
     end
 
     def expect_locked(&block)
@@ -128,11 +127,11 @@ class BundlerCase
     end
 
     def test
-      Bundler.with_clean_env do
+      Bundler.with_original_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
         Dir.chdir(@bundler_case.out_dir) do
           @procs.map(&:call)
-          @cmd.call
+          _execute_bundler
         end
       end
 
@@ -146,6 +145,12 @@ class BundlerCase
     end
 
     private
+
+    def _execute_bundler
+      cmd = @version ? @cmd.gsub(/(?<!\.)(bundle )/, "bundle _#{@version}_ ") : @cmd
+      puts "=> #{cmd}"
+      system cmd
+    end
 
     def fake_gem(name, versions, deps=[])
       Array(versions).each do |ver|
