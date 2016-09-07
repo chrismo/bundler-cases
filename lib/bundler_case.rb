@@ -1,15 +1,16 @@
 class BundlerCase
   extend Forwardable
 
-  def self.define(&block)
-    c = BundlerCase.new
+  def self.define(options={}, &block)
+    c = BundlerCase.new(options)
     c.instance_eval(&block)
     c
   end
 
   attr_reader :out_dir, :repo_dir, :failures
 
-  def initialize
+  def initialize(options={})
+    @reuse_out_dir = options[:reuse_out_dir]
     recreate_out_dir
     make_repo_dir
 
@@ -47,11 +48,15 @@ class BundlerCase
     File.join(@out_dir, 'Gemfile')
   end
 
+  def lock_filename
+    File.join(@out_dir, 'Gemfile.lock')
+  end
+
   private
 
   def recreate_out_dir
     @out_dir = File.expand_path('../out', __dir__)
-    FileUtils.remove_entry_secure(@out_dir) if File.exist?(@out_dir)
+    FileUtils.remove_entry_secure(@out_dir) if File.exist?(@out_dir) unless @reuse_out_dir
     FileUtils.makedirs @out_dir
   end
 
@@ -89,6 +94,12 @@ class BundlerCase
       contents = block.call.outdent
       swap_in_fake_repo(contents)
       @procs << -> { GemfileFixture.new(@bundler_case, contents, opts).build }
+    end
+
+    def given_lockfile(opts={}, &block)
+      contents = block.call.outdent
+      swap_in_fake_repo(contents)
+      @procs << -> { File.open(@bundler_case.lock_filename, 'w') { |f| f.print contents } }
     end
 
     def given_gemspec
