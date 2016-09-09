@@ -9,7 +9,7 @@ BundlerCase.define do
       fake_gem 'bar', %w(2.0.3 2.0.4 2.1.0 2.1.1 3.0.0)
     end
 
-    given_bundler_version { '1.13.0.rc.2' }
+    given_bundler_version { '1.13.0' }
 
     given_gemfile lock: ['foo 1.4.3', 'bar 2.0.3'] do
       <<-G
