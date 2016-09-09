@@ -31,9 +31,22 @@ BundlerCase.define do
 
   step 'Update foo without modifying Gemfile' do
     execute_bundler { 'bundle update foo' }
-    # execute_bundler { 'bundle update --conservative foo' } <= new flag idea?
 
-    expect_locked { ['foo 2.0.0', 'bar 1.0.0', 'qux 1.1.0'] }
-    # fails => Expected bar 1.0.0, found bar 1.1.0
+    expect_locked { ['foo 2.0.0', 'bar 1.1.0', 'qux 1.1.0'] }
   end
+
+  # Desired behavior with proposed flag by some users:
+  #
+  # step 'Update foo without modifying Gemfile' do
+  #   execute_bundler { 'bundle update --conservative foo' }
+  #
+  #   expect_locked { ['foo 2.0.0', 'bar 1.0.0', 'qux 1.1.0'] }
+  #
+  #   Conservative in this case means: "Don't move any dependencies relied on by others. Same as conservative `bundle install` does."
+  #   This flag is different from --major/--minor/--patch because in it the user doesn't care about the destination of the version
+  #   being updated to ... they just want to restrict how impactful it is to dependencies.
+  #
+  #   But of course, by default, the flags will be able to be combined, so we'd need to think through expected results of
+  #   combinations of these flags. Seems reasonable to want/use --conservative AND --major/--minor/--patch.
+  # end
 end
