@@ -2,8 +2,8 @@ require_relative 'spec_helper'
 
 describe BundlerCase do
   after do
-    # dir = BundlerCase.new.out_dir
-    # FileUtils.remove_entry_secure(dir) if File.exist?(dir)
+    dir = BundlerCase.new.out_dir
+    FileUtils.remove_entry_secure(dir) if File.exist?(dir)
   end
 
   it 'given gems' do
