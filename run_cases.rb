@@ -42,8 +42,10 @@ class BundlerCase
       title = File.basename(fn, '.rb').gsub(/_/, ' ').split(/ /).map(&:capitalize).join(' ')
       puts_title(title)
       if c
+        src = File.expand_path('../setup', fn)
+        c.copy_setup(src) if File.exist?(src)
         passed = c.test
-        if passed then
+        if passed
           Pass.new(fn, title)
         else
           puts c.failures.join("\n")

@@ -28,6 +28,10 @@ class BundlerCase
     @nested << step
   end
 
+  def copy_setup(src)
+    Dir["#{src}/*"].each { |src_fn| FileUtils.cp src_fn, out_dir }
+  end
+
   def test
     @failures = []
     steps = @nested.empty? ? Array(@step) : @nested
