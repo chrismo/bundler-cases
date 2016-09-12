@@ -142,21 +142,31 @@ class BundlerCase
     end
 
     def test
+      bundler_result = true
+
       Bundler.with_clean_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
         Dir.chdir(@bundler_case.out_dir) do
           @procs.map(&:call)
-          _execute_bundler
+          bundler_result = _execute_bundler
         end
       end
 
-      if @expected_specs.empty?
-        []
-      else
+      test_failures = []
+
+      unless @expected_specs.empty?
         lockfile = File.join(@bundler_case.out_dir, 'Gemfile.lock')
         parser = Bundler::LockfileParser.new(Bundler.read_file(lockfile))
-        ExpectedSpecs.new.failures(@expected_specs, parser.specs)
+        test_failures.concat(ExpectedSpecs.new.failures(@expected_specs, parser.specs))
       end
+
+      unless bundler_result
+        unless @expect_bundler_failure
+          test_failures << 'Bundle command failed'
+        end
+      end
+
+      test_failures
     end
 
     private
