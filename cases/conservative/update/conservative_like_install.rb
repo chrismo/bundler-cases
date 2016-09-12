@@ -48,5 +48,8 @@ BundlerCase.define do
   #
   #   But of course, by default, the flags will be able to be combined, so we'd need to think through expected results of
   #   combinations of these flags. Seems reasonable to want/use --conservative AND --major/--minor/--patch.
+  #
+  #   Moar thoughts - `--conservative` is too generic a name. What we want, I think, is `--lock-shared-dependencies`.
+  #   So far at least, that, while a long option to type, appears to best capture what is happening.
   # end
 end
