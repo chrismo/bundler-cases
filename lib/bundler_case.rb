@@ -125,6 +125,11 @@ class BundlerCase
       @cmd = block.call
     end
 
+    # TODO - the message isn't compared
+    def expect_error(&block)
+      @expected_bundler_error = block.call
+    end
+
     def expect_locked(&block)
       @expected_specs.concat(block.call.map do |name, ver|
         if ver.nil? && name.split(/ /).length == 2
@@ -161,7 +166,7 @@ class BundlerCase
       end
 
       unless bundler_result
-        unless @expect_bundler_failure
+        unless @expected_bundler_error
           test_failures << 'Bundle command failed'
         end
       end
