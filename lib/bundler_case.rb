@@ -46,13 +46,13 @@ class BundlerCase
   def test
     @failures = []
     steps = @nested.empty? ? Array(@step) : @nested
-    steps.each do |s|
+    steps.each_with_index do |s, i|
       if s.description
         puts '#' * s.description.length
         puts s.description
         puts '#' * s.description.length
       end
-      @failures = s.test
+      @failures = s.test(i + 1)
       break unless @failures.empty?
       puts
     end
@@ -158,12 +158,12 @@ class BundlerCase
       end)
     end
 
-    def test
+    def test(step_counter)
       Bundler.with_clean_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
         Dir.chdir(@bundler_case.out_dir) do
           @procs.map(&:call)
-          _execute_bundler
+          _execute_bundler(step_counter)
         end
       end
 
@@ -207,13 +207,13 @@ class BundlerCase
 
     private
 
-    def _execute_bundler
+    def _execute_bundler(step_counter)
       # Open3 is a 'better' way to do this, but I couldn't quickly figure out
       # how to stream output to console as well during the cmd. Since some installs
       # are long-running, not seeing any output until the cmd is finished is wonkers.
       cmd = versioned_bundler_command(@cmd)
       puts "=> #{cmd}"
-      out_file = File.join(Dir.tmpdir, 'bundler.case.out.txt')
+      out_file = File.join(@bundler_case.out_dir, "step.#{step_counter}.out.txt")
       cmd = "#{cmd} 2>&1 | tee #{out_file}"
       system(cmd).tap do
         @out = File.read(out_file)
