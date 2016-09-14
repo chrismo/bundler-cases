@@ -20,7 +20,7 @@ class BundlerCase
 
   def initialize(options={})
     @reuse_out_dir = options[:reuse_out_dir]
-    @default_bundler_version = options[:bundler_version]
+    @default_bundler_version = options[:bundler_version] || options[:version]
     recreate_out_dir
     make_repo_dir
 
@@ -138,10 +138,6 @@ class BundlerCase
       @cmd = block.call
     end
 
-    def expect_error(&block)
-      @expected_bundler_error = block.call
-    end
-
     def expect_output(&block)
       @expected_bundler_output = block.call
     end
@@ -188,7 +184,6 @@ class BundlerCase
     end
 
     def assert_outputs
-      assert_output(@expected_bundler_error, @err)
       assert_output(@expected_bundler_output, @out)
     end
 
@@ -213,21 +208,19 @@ class BundlerCase
     private
 
     def _execute_bundler
-      puts "=> #{cmd = versioned_bundler_command(@cmd)}"
-      Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
-        stdin.close
-
-        @exitstatus = wait_thr && wait_thr.value.exitstatus
-        @out = Thread.new { stdout.read }.value.strip
-        @err = Thread.new { stderr.read }.value.strip
+      # Open3 is a 'better' way to do this, but I couldn't quickly figure out
+      # how to stream output to console as well during the cmd. Since some installs
+      # are long-running, not seeing any output until the cmd is finished is wonkers.
+      cmd = versioned_bundler_command(@cmd)
+      puts "=> #{cmd}"
+      out_file = File.join(Dir.tmpdir, 'bundler.case.out.txt')
+      cmd = "#{cmd} 2>&1 | tee #{out_file}"
+      system(cmd).tap do
+        @out = File.read(out_file)
       end
-
-      puts [@out, @err].join("\n")
-
-      @exitstatus == 0
     end
 
-    def fake_gem(name, versions, deps=[])
+    def fake_gem(name, versions, deps=[], opts={})
       Array(versions).each do |ver|
         spec = Gem::Specification.new.tap do |s|
           s.name = name
@@ -237,11 +230,22 @@ class BundlerCase
           end
         end
 
-        gems_dir = File.join(@bundler_case.repo_dir, 'gems')
-        Dir.chdir(gems_dir) do
-          Bundler.rubygems.build(spec, skip_validation = true)
+        if opts[:system]
+          Dir.chdir(Dir.tmpdir) do
+            Bundler.rubygems.build(spec, skip_validation = true)
+            `gem install --ignore-dependencies --no-ri --no-rdoc #{spec.full_name}.gem`
+          end
+        else
+          gems_dir = File.join(@bundler_case.repo_dir, 'gems')
+          Dir.chdir(gems_dir) do
+            Bundler.rubygems.build(spec, skip_validation = true)
+          end
         end
       end
+    end
+
+    def fake_system_gem(name, versions, deps=[])
+      fake_gem(name, versions, deps, system: true)
     end
 
     def swap_in_fake_repo(contents)
