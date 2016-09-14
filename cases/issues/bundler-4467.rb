@@ -30,7 +30,7 @@ BundlerCase.define do
   end
 
   step 'still a problem in latest release' do
-    given_bundler_version { '1.13.0.rc.2' }
+    given_bundler_version { '1.13.1' }
     execute_bundler { 'bundle update bar' }
     expect_output { "Your Gemfile.lock is corrupt. The following gem is missing from the DEPENDENCIES\nsection: 'qux'" }
   end

@@ -1,11 +1,9 @@
-BundlerCase.define do
+BundlerCase.define bundler_version: '1.13.1' do
   setup = step 'Setup Gemfile' do
     given_gems do
       fake_gem 'foo', %w(1.0.0 1.0.1 1.1.0 2.0.0 2.1.0 2.2.0)
       fake_gem 'bar', %w(1.0.0 1.0.1 1.1.0 2.0.0 2.1.0 2.2.0)
     end
-
-    given_bundler_version { '1.13.0' }
 
     lock = ['foo 1.0.0', 'bar 1.0.0']
 
