@@ -1,3 +1,12 @@
+require 'open3'
+
+module VersionedBundlerCommand
+  def versioned_bundler_command(cmd)
+    ver = @version || @bundler_case.default_bundler_version || nil
+    ver ? cmd.gsub(/(?<!\.)(bundle )/, "bundle _#{ver}_ ") : cmd
+  end
+end
+
 class BundlerCase
   extend Forwardable
 
@@ -7,10 +16,11 @@ class BundlerCase
     c
   end
 
-  attr_reader :out_dir, :repo_dir, :failures
+  attr_reader :out_dir, :repo_dir, :failures, :default_bundler_version
 
   def initialize(options={})
     @reuse_out_dir = options[:reuse_out_dir]
+    @default_bundler_version = options[:bundler_version]
     recreate_out_dir
     make_repo_dir
 
@@ -18,6 +28,7 @@ class BundlerCase
     # behavior OR nested ... but ... we'll see how this plays out
     @nested = []
     @step = Step.new(self)
+    @step.given_bundler_version { @default_bundler_version } if @default_bundler_version
   end
 
   def step(description=nil, &block)
@@ -73,6 +84,8 @@ class BundlerCase
   end
 
   class Step
+    include VersionedBundlerCommand
+
     attr_reader :description
 
     def initialize(bundler_case, description=nil)
@@ -125,9 +138,12 @@ class BundlerCase
       @cmd = block.call
     end
 
-    # TODO - the message isn't compared
     def expect_error(&block)
       @expected_bundler_error = block.call
+    end
+
+    def expect_output(&block)
+      @expected_bundler_output = block.call
     end
 
     def expect_locked(&block)
@@ -147,39 +163,68 @@ class BundlerCase
     end
 
     def test
-      bundler_result = true
-
       Bundler.with_clean_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
         Dir.chdir(@bundler_case.out_dir) do
           @procs.map(&:call)
-          bundler_result = _execute_bundler
+          _execute_bundler
         end
       end
 
-      test_failures = []
+      @test_failures = []
 
+      assert_outputs
+      assert_specs
+
+      @test_failures
+    end
+
+    def assert_specs
       unless @expected_specs.empty?
         lockfile = File.join(@bundler_case.out_dir, 'Gemfile.lock')
         parser = Bundler::LockfileParser.new(Bundler.read_file(lockfile))
-        test_failures.concat(ExpectedSpecs.new.failures(@expected_specs, parser.specs))
+        @test_failures.concat(ExpectedSpecs.new.failures(@expected_specs, parser.specs))
       end
+    end
 
-      unless bundler_result
-        unless @expected_bundler_error
-          test_failures << 'Bundle command failed'
+    def assert_outputs
+      assert_output(@expected_bundler_error, @err)
+      assert_output(@expected_bundler_output, @out)
+    end
+
+    def assert_output(to_match, to_search)
+      if to_match
+        case to_match
+        when String
+          re = /#{Regexp.escape(to_match)}/
+          if to_search !~ re
+            @test_failures << "Expected text not found: #{to_match}"
+          end
+        when Regexp
+          if to_search !~ to_match
+            @test_failures << "Expected text not found: #{to_match}"
+          end
+        else
+          @test_failures << "Case definition failure. Unexpected type of expected text: #{to_match.class}"
         end
       end
-
-      test_failures
     end
 
     private
 
     def _execute_bundler
-      cmd = @version ? @cmd.gsub(/(?<!\.)(bundle )/, "bundle _#{@version}_ ") : @cmd
-      puts "=> #{cmd}"
-      system cmd
+      puts "=> #{cmd = versioned_bundler_command(@cmd)}"
+      Open3.popen3(cmd) do |stdin, stdout, stderr, wait_thr|
+        stdin.close
+
+        @exitstatus = wait_thr && wait_thr.value.exitstatus
+        @out = Thread.new { stdout.read }.value.strip
+        @err = Thread.new { stderr.read }.value.strip
+      end
+
+      puts [@out, @err].join("\n")
+
+      @exitstatus == 0
     end
 
     def fake_gem(name, versions, deps=[])
@@ -207,6 +252,8 @@ class BundlerCase
   def_delegators :@step, *(Step.public_instance_methods(include_super = false) - [:test])
 
   class GemfileFixture
+    include VersionedBundlerCommand
+
     def initialize(bundler_case, contents, opts={})
       @bundler_case = bundler_case
       @gem_filename = bundler_case.gem_filename
@@ -226,7 +273,8 @@ class BundlerCase
 
     def lock_down
       pre_contents = @contents.dup
-      @opts[:lock].each do |gem_lock|
+      lock = (@opts[:lock].is_a? TrueClass) ? [] : @opts[:lock]
+      lock.each do |gem_lock|
         name, version = gem_lock.split(' ')
         re = /^\s*gem.*['"]\s*#{name}\s*['"].*$/
         unless pre_contents.gsub!(re, "gem '#{name}', '#{version}'")
@@ -237,7 +285,7 @@ class BundlerCase
       end
       write_gemfile_contents(pre_contents)
       Dir.chdir(@bundler_case.out_dir) do
-        cmd = 'bundle lock'
+        cmd = versioned_bundler_command('bundle lock')
         puts "=> #{cmd}"
         system cmd
       end
