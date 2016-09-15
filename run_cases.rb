@@ -68,6 +68,7 @@ class BundlerCase
       end
       pass, fail = results.partition { |r| r.is_a?(Pass) }
       pass.concat(fail).each { |r| puts r.to_s }
+      exit(fail.empty? ? 0 : 1)
     end
   end
 end

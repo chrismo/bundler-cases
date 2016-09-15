@@ -3,7 +3,21 @@ require 'open3'
 module VersionedBundlerCommand
   def versioned_bundler_command(cmd)
     ver = @version || @bundler_case.default_bundler_version || nil
+    ensure_version_installed(ver) if ver
     ver ? cmd.gsub(/(?<!\.)(bundle )/, "bundle _#{ver}_ ") : cmd
+  end
+
+  def ensure_version_installed(ver)
+    $installed ||= lookup_installed_bundler_versions
+    unless $installed.include?(ver)
+      puts "Installing bundler #{ver}..."
+      `gem install bundler --version #{ver}`
+      $installed = lookup_installed_bundler_versions
+    end
+  end
+
+  def lookup_installed_bundler_versions
+    `gem list bundler`.scan(/\Abundler \((.*)\)/).join.split(/, /)
   end
 end
 
@@ -125,13 +139,6 @@ class BundlerCase
 
     def given_bundler_version(&block)
       @version = block.call
-      @procs << -> {
-        installed = `gem list bundler`.scan(/\Abundler \((.*)\)/).join.split(/, /)
-        unless installed.include?(@version)
-          puts "Installing bundler #{@version}..."
-          `gem install bundler --version #{@version}`
-        end
-      }
     end
 
     def execute_bundler(&block)
