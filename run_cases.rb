@@ -60,6 +60,7 @@ class BundlerCase
       results = []
       Dir[File.expand_path('cases/**/*.rb', __dir__)].each do |fn|
         next if fn !~ /#{filter}/ if filter
+        next if fn =~ /\/setup\//
         begin
           results << execute_case(fn)
         rescue => e

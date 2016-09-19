@@ -1,4 +1,4 @@
-BundlerCase.define bundler_version: '1.13.1' do
+BundlerCase.define bundler_version: '1.12.5' do
   step do
     execute_bundler { 'gem install awesome_print' }
   end
@@ -17,7 +17,17 @@ gem "awesome_print"
 
   step do
     execute_bundler { 'bundle show --paths' }
+    expect_output { /\/out\/.*awesome_print/ }
+  end
 
+  step do
+    given_bundler_version { '1.13.1' }
+    execute_bundler { 'bundle install --deployment' }
+  end
+
+  step do
+    given_bundler_version { '1.13.1' }
+    execute_bundler { 'bundle show --paths' }
     expect_output { /\/out\/.*awesome_print/ }
   end
 end
