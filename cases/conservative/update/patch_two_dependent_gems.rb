@@ -1,4 +1,4 @@
-BundlerCase.define bundler_version: '1.13.1' do
+BundlerCase.define bundler_version: '1.13.2' do
   setup = step 'Setup Gemfile' do
     given_gems do
       fake_gem 'foo', '1.4.3', [['bar', '~> 2.0']]

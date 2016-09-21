@@ -21,12 +21,12 @@ gem "awesome_print"
   end
 
   step do
-    given_bundler_version { '1.13.1' }
+    given_bundler_version { '1.13.2' }
     execute_bundler { 'bundle install --deployment' }
   end
 
   step do
-    given_bundler_version { '1.13.1' }
+    given_bundler_version { '1.13.2' }
     execute_bundler { 'bundle show --paths' }
     expect_output { /\/out\/.*awesome_print/ }
   end
