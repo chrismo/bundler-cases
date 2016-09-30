@@ -5,7 +5,7 @@
 # and `--minor` handling is completely skipped when `--major` is provided. Obviously, this is
 # the source of the inconsistency. I think with some work on a --conservative flag, we can get some
 # better stuff.
-BundlerCase.define bundler_version: '1.13.1' do
+BundlerCase.define bundler_version: '1.13.2' do
   setup = step 'Setup Gemfile' do
     given_gems do
       fake_gem 'foo', '1.4.3', [['bar', '~> 2.0']]

@@ -20,7 +20,7 @@ end
   end
 
   step do
-    given_bundler_version { '1.13.1' }
+    given_bundler_version { '1.13.2' }
     execute_bundler { 'bundle outdated' }
     expect_output { '* ttfunk' }
   end
