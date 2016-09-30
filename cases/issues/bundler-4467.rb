@@ -26,13 +26,13 @@ BundlerCase.define do
 
     given_bundler_version { '1.11.2' }
     execute_bundler { 'bundle update bar' }
-    expect_output { "Your Gemfile.lock is corrupt. The following gem is missing from the DEPENDENCIES\nsection: 'qux'" }
+    expect_output { "Your Gemfile.lock is corrupt. The following gem is missing from the DEPENDENCIES section: 'qux'" }
   end
 
   step 'still a problem in latest release' do
     given_bundler_version { '1.13.2' }
     execute_bundler { 'bundle update bar' }
-    expect_output { "Your Gemfile.lock is corrupt. The following gem is missing from the DEPENDENCIES\nsection: 'qux'" }
+    expect_output { "Your Gemfile.lock is corrupt. The following gem is missing from the DEPENDENCIES section: 'qux'" }
   end
 
   step "doesn't blow up in 1.10.5, but update doesn't happen" do
