@@ -54,7 +54,7 @@ class BundlerCase
   end
 
   def copy_setup(src)
-    Dir["#{src}/*"].each { |src_fn| FileUtils.cp src_fn, out_dir }
+    FileUtils.cp_r "#{src}/.", out_dir, verbose: true
   end
 
   def test
