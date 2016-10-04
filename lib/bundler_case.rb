@@ -124,7 +124,7 @@ class BundlerCase
     def given_gemfile(opts={}, &block)
       contents = block.call.outdent
       swap_in_fake_repo(contents)
-      @procs << -> { GemfileFixture.new(@bundler_case, contents, opts).build }
+      @procs << -> { GemfileFixture.new(@bundler_case, contents, opts.merge(version: @version)).build }
     end
 
     def given_lockfile(opts={}, &block)
@@ -237,15 +237,17 @@ class BundlerCase
           end
         end
 
+        # always put it in the fake repo, otherwise there are weird problems.
+        gems_dir = File.join(@bundler_case.repo_dir, 'gems')
+        Dir.chdir(gems_dir) do
+          Bundler.rubygems.build(spec, skip_validation = true)
+        end
+
+        # also go ahead and install it in the system rubies
         if opts[:system]
           Dir.chdir(Dir.tmpdir) do
             Bundler.rubygems.build(spec, skip_validation = true)
             `gem install --ignore-dependencies --no-ri --no-rdoc #{spec.full_name}.gem`
-          end
-        else
-          gems_dir = File.join(@bundler_case.repo_dir, 'gems')
-          Dir.chdir(gems_dir) do
-            Bundler.rubygems.build(spec, skip_validation = true)
           end
         end
       end
@@ -270,6 +272,7 @@ class BundlerCase
       @gem_filename = bundler_case.gem_filename
       @contents = contents
       @opts = opts
+      @version = opts[:version]
     end
 
     def build
