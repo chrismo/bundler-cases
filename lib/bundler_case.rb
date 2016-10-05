@@ -160,7 +160,7 @@ class BundlerCase
     def given_bundler_version(&block)
       @version = block.call
     end
-    
+
     def given_rubygems_version(&block)
       @rg_version = block.call
     end
@@ -240,7 +240,7 @@ class BundlerCase
 
     def _execute_bundler(step_counter)
       RubyGemsVersion.ensure_version(@rg_version) if @rg_version
-      
+
       # Open3 is a 'better' way to do this, but I couldn't quickly figure out
       # how to stream output to console as well during the cmd. Since some installs
       # are long-running, not seeing any output until the cmd is finished is wonkers.
@@ -348,7 +348,9 @@ class ExpectedSpecs
       unless found
         found = actual.detect { |s| s.name == expect.name }
         if found
-          res << "Expected #{expect.name} #{expect.version}, found #{found.name} #{found.version}"
+          unless expect.version.nil? # if no version expected, don't fail it
+            res << "Expected #{expect.name} #{expect.version}, found #{found.name} #{found.version}"
+          end
         else
           res << "Expected #{expect.name} #{expect.version}, gem not found"
         end

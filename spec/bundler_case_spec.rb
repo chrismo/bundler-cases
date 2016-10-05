@@ -123,7 +123,7 @@ describe BundlerCase do
 end
 
 describe ExpectedSpecs do
-  def spec(name, version)
+  def spec(name, version=nil)
     Gem::Specification.new(name, version)
   end
 
@@ -139,5 +139,10 @@ describe ExpectedSpecs do
   it 'reports errors for missing gem' do
     failures = ExpectedSpecs.new.failures([spec('foo', '1.0.0')], [])
     expect(failures).to eql ['Expected foo 1.0.0, gem not found']
+  end
+
+  it 'does not report error for no version specified' do
+    failures = ExpectedSpecs.new.failures([spec('foo')], [spec('foo', '1.0.1')])
+    expect(failures).to eql []
   end
 end
