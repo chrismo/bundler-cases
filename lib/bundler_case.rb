@@ -8,6 +8,7 @@ module VersionedBundlerCommand
   end
 
   def ensure_version_installed(ver)
+    # TODO: redesign to remove this global
     $installed ||= lookup_installed_bundler_versions
     unless $installed.include?(ver)
       puts "Installing bundler #{ver}..."
@@ -18,6 +19,25 @@ module VersionedBundlerCommand
 
   def lookup_installed_bundler_versions
     `gem list bundler`.scan(/\Abundler \((.*)\)/).join.split(/, /)
+  end
+end
+
+class RubyGemsVersion
+  def self.ensure_version(version)
+    @@version ||= lookup_version
+    unless @@version == version
+      # gotta blow these away to ensure bin wrappers are accurate
+      puts 'Removing all bundler gems...'
+      `gem uninstall bundler -a -x --force`
+
+      puts "Installing RubyGems #{version}..."
+      `gem uninstall rubygems-update` # shouldn't have to do this, but I frequently do for some reason
+      `gem update --system #{version}`
+    end
+  end
+
+  def self.lookup_version
+    `gem --version`.chomp
   end
 end
 
@@ -140,6 +160,10 @@ class BundlerCase
     def given_bundler_version(&block)
       @version = block.call
     end
+    
+    def given_rubygems_version(&block)
+      @rg_version = block.call
+    end
 
     def execute_bundler(&block)
       @cmd = block.call
@@ -215,6 +239,8 @@ class BundlerCase
     private
 
     def _execute_bundler(step_counter)
+      RubyGemsVersion.ensure_version(@rg_version) if @rg_version
+      
       # Open3 is a 'better' way to do this, but I couldn't quickly figure out
       # how to stream output to console as well during the cmd. Since some installs
       # are long-running, not seeing any output until the cmd is finished is wonkers.
