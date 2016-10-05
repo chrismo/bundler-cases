@@ -28,11 +28,11 @@ class RubyGemsVersion
     unless @@version == version
       # gotta blow these away to ensure bin wrappers are accurate
       puts 'Removing all bundler gems...'
-      `gem uninstall bundler -a -x --force`
+      system 'gem uninstall bundler -a -x --force'
 
       puts "Installing RubyGems #{version}..."
-      `gem uninstall rubygems-update` # shouldn't have to do this, but I frequently do for some reason
-      `gem update --system #{version}`
+      system 'gem uninstall rubygems-update -a -x --force' # shouldn't have to do this, but I frequently do for some reason
+      system "gem update --system #{version}"
     end
   end
 
