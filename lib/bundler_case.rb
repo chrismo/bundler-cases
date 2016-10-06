@@ -189,6 +189,10 @@ class BundlerCase
       end)
     end
 
+    def expect_exit_success(&block)
+      @expected_exit_success = block.call
+    end
+
     def test(step_counter)
       Bundler.with_clean_env do
         ENV['BUNDLE_GEMFILE'] = @bundler_case.gem_filename
@@ -216,6 +220,9 @@ class BundlerCase
 
     def assert_outputs
       assert_output(@expected_bundler_output, @out)
+      if defined?(@expected_exit_success) && (@expected_exit_success != @exit_success)
+        @test_failures << "Expected exit success to be #{@expected_exit_success}, but was #{@exit_success}"
+      end
     end
 
     def assert_output(to_match, to_search)
@@ -247,8 +254,9 @@ class BundlerCase
       cmd = versioned_bundler_command(@cmd)
       puts "=> #{cmd}"
       out_file = File.join(@bundler_case.out_dir, "step.#{step_counter}.out.txt")
-      cmd = "#{cmd} 2>&1 | tee #{out_file}"
-      system(cmd).tap do
+      cmd = "#{cmd} 2>&1 | tee #{out_file} ; test ${PIPESTATUS[0]} -eq 0"
+      system(cmd).tap do |exit_success|
+        @exit_success = exit_success
         @out = File.read(out_file)
       end
     end

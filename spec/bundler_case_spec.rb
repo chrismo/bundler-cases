@@ -1,5 +1,9 @@
 require_relative 'spec_helper'
 
+# Not a lot of specs in here because so many of the cases themselves will exercise the core framework
+# and in essence test it. This is lazy, but also hasn't been a problem thus far. Sure, in the future
+# I may regret this the day I think Bundler has a bug but it turns out the framework here has one.
+
 describe BundlerCase do
   after do
     dir = BundlerCase.new.out_dir
@@ -34,13 +38,9 @@ describe BundlerCase do
           G
         end
 
-        execute_bundler do
-          'bundle install --path zz'
-        end
-
-        expect_locked do
-          ['foo 1.0.0', 'bar 1.0.1']
-        end
+        execute_bundler { 'bundle install --path zz' }
+        expect_locked { ['foo 1.0.0', 'bar 1.0.1'] }
+        expect_exit_success { true }
       end
 
       step do
@@ -48,17 +48,9 @@ describe BundlerCase do
           fake_gem 'foo', '1.1.0'
         end
 
-        execute_bundler do
-          'bundle update'
-        end
-
-        expect_locked do
-          ['foo 1.1.0']
-        end
-
-        expect_not_locked do
-          %w(bar)
-        end
+        execute_bundler { 'bundle update' }
+        expect_locked { ['foo 1.1.0'] }
+        expect_not_locked { %w(bar) }
       end
     end
     result = c.test
@@ -84,13 +76,8 @@ describe BundlerCase do
         G
       end
 
-      execute_bundler do
-        'bundle install --path zz'
-      end
-
-      expect_locked do
-        ['foo 1.0.0', 'bar 1.1.0']
-      end
+      execute_bundler { 'bundle install --path zz' }
+      expect_locked { ['foo 1.0.0', 'bar 1.1.0'] }
     end
     expect(c.test).to_not be true
     expect(c.failures).to_not be_empty
