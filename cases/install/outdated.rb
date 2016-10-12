@@ -20,43 +20,63 @@ source 'fake'
   end
 
   step 'no arguments' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated' }
+    execute_bundler { 'bundle outdated' }
     expect_output { /bar.*foo.*qux/m }
     expect_exit_success { false }
   end
 
   step 'filter to display major only' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --major' }
+    execute_bundler { 'bundle outdated --major' }
     expect_output { /bundle:\n\s+\* foo/ }
     expect_exit_success { false }
   end
 
   step 'filter to display minor only' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --minor' }
+    execute_bundler { 'bundle outdated --minor' }
     expect_output { /bundle:\n\s+\* bar/ }
     expect_exit_success { false }
   end
 
   step 'filter to display patch only' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --patch' }
+    execute_bundler { 'bundle outdated --patch' }
     expect_output { /bundle:\n\s+\* qux/ }
     expect_exit_success { false }
   end
 
+
+  step 'filter to display major only with strict' do
+    execute_bundler { 'bundle outdated --major --strict' }
+    #expect_output { /bundle:\n\s+\* foo/ }
+    expect_exit_success { false }
+  end
+
+  step 'filter to display minor only with strict' do
+    execute_bundler { 'bundle outdated --minor --strict' }
+    #expect_output { /bundle:\n\s+\* bar/ }
+    expect_exit_success { false }
+  end
+
+  step 'filter to display patch only with strict' do
+    execute_bundler { 'bundle outdated --patch --strict' }
+    #expect_output { /bundle:\n\s+\* qux/ }
+    expect_exit_success { false }
+  end
+
+
   step 'filter to display foo_group only' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --group foo_group' }
+    execute_bundler { 'bundle outdated --group foo_group' }
     expect_output { /bundle:\n.*Group foo_group.*\n\s+\* bar.*\n\s+\* foo/ }
     expect_exit_success { false }
   end
 
   step 'filter to display minor and patch with groups' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --groups --patch --minor' }
+    execute_bundler { 'bundle outdated --groups --patch --minor' }
     expect_output { /bundle:\n.*Group dev, zep.*\n\s+\* qux.*\n.*Group foo_group.*\n\s+\* bar/ }
     expect_exit_success { false }
   end
 
   step 'parseable overrides groups' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated --groups --patch --minor --parseable' }
+    execute_bundler { 'bundle outdated --groups --patch --minor --parseable' }
     expect_output { /bar.*\nqux/ }
     expect_exit_success { false }
   end
@@ -66,7 +86,7 @@ source 'fake'
   end
 
   step 'outdated now up to date' do
-    execute_bundler { 'source ~/.bash_profile; dbundle outdated' }
+    execute_bundler { 'bundle outdated' }
     expect_output { /up.to.date/i }
     expect_exit_success { true }
   end
