@@ -29,10 +29,12 @@ class RubyGemsVersion
       # gotta blow these away to ensure bin wrappers are accurate
       puts 'Removing all bundler gems...'
       system 'gem uninstall bundler -a -x --force'
+      $installed = nil
 
       puts "Installing RubyGems #{version}..."
       system 'gem uninstall rubygems-update -a -x --force' # shouldn't have to do this, but I frequently do for some reason
       system "gem update --system #{version}"
+      @@version = nil
     end
   end
 
