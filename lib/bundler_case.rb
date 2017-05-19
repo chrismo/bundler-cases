@@ -12,7 +12,7 @@ module VersionedBundlerCommand
     $installed ||= lookup_installed_bundler_versions
     unless $installed.include?(ver)
       puts "Installing bundler #{ver}..."
-      `gem install bundler --version #{ver}`
+      `gem install bundler --version #{ver} --no-document`
       $installed = lookup_installed_bundler_versions
     end
   end

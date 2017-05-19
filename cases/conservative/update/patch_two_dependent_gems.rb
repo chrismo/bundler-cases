@@ -20,8 +20,9 @@ end
     expect_locked { ['foo 1.4.3', 'bar 2.0.3'] }
   end
 
-  # why doesn't `--patch --strict foo` push this to 2.0.4? it pushes foo to 1.4.4.
-  # theory: because bar starts as locked, and the foo requirement DOESN'T CHANGE so bar stays locked.
+  # why doesn't `patch --strict foo` push this to 2.0.4? it pushes foo to 1.4.4.
+  # because bar is locked, and the foo requirement DOESN'T CHANGE so bar stays locked
+  # because sorting puts the current version as the version to pick first for locked gems.
   step do
     execute_bundler { 'bundle update --patch --strict foo' }
     expect_locked { ['foo 1.4.4', 'bar 2.0.3'] }
@@ -49,9 +50,9 @@ end
 
   repeat_step setup
 
-  # bar moves in this case, even though it starts locked, because it's unlocked when foo's REQUIREMENT for bar changes,
-  # AND nothing else keeps it put, because it's not a declared dependency.
-  # TODO: double check this ^^
+  # bar moves in this case, even though it starts locked, because it's free to move when foo's REQUIREMENT for bar
+  # changes,AND nothing else keeps it put, because it's not a declared dependency. It's technically locked, but
+  # it's not a vertex(?) in the resolver either, so it can move if it has to when foo moves.
   step do
     execute_bundler { 'bundle update --patch foo' }
     # expect_locked { ['foo 1.4.4', 'bar 2.0.3'] } <= what i thought based on non-dependent case (rack, addressable)
